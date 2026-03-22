@@ -25,13 +25,12 @@ RawData/
 ### 1. 安装依赖
 ```bash
 pip install torch transformers pandas
-、、、
+```
 
-2. 准备数据
+### 2. 准备数据
 
 将数据集放入 RawData/ 文件夹。
 
-3. 运行训练
+### 3. 运行训练
 python train_model.py
 
-训练完成后会生成 best_model.pt。
