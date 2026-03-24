@@ -1,0 +1,12 @@
+{
+  "train_path": "./RawData/train_3k.txt",
+  "dev_path": "./RawData/dev_1k.txt",
+  "test_path": "./RawData/test_1k.txt",
+  "pretrained_model": "bert-base-chinese",
+  "max_length": 32,
+  "batch_size": 8,
+  "lr": 2e-5,
+  "epochs": 50,
+  "num_labels": 15,
+  "best_model_path": "best_model.pt"
+}
