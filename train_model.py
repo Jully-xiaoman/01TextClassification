@@ -9,7 +9,7 @@ with open("args.json", "r", encoding="utf-8") as f:
 # 1.数据接口
 train_dataloader, dev_dataloader, test_dataloader, label2id, id2label = create_datasets_and_loaders(config)
 
-# 7.加载模型，准备优化器
+# 2.加载模型，准备优化器
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = create_model(config)
 model.to(device)
@@ -52,44 +52,45 @@ def evaluate(model, dataloader, device):
 
     return accuracy, avg_loss
 
-# 9.模型训练循环
-best_dev_acc = 0.0
-for epoch in range(50):
-    # 切换到训练模式，Dropout生效。
-    model.train()
-    total_loss = 0
+def train(model, train_dataloader, dev_dataloader, optimizer, device, config):
+    best_dev_acc = 0.0
 
-    for batch in train_dataloader:
-        input_ids = batch["input_ids"].to(device)
-        attention_mask = batch["attention_mask"].to(device)
-        labels = batch["labels"].to(device)
+    for epoch in range(config["epochs"]):
+        model.train()
+        total_loss = 0
 
-        outputs = model(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            labels=labels
-        )
-        loss = outputs.loss
+        for batch in train_dataloader:
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+            labels = batch["labels"].to(device)
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            outputs = model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                labels=labels
+            )
+            loss = outputs.loss
 
-        total_loss += loss.item()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-    # 平均训练batchloss
-    avg_train_loss = total_loss / len(train_dataloader)
-    # 一个Epoch结束后在验证集上验证一次
-    dev_acc,dev_loss = evaluate(model, dev_dataloader, device)
+            total_loss += loss.item()
 
-    print(f"Epoch {epoch+1}, Train Loss: {avg_train_loss:.4f}")
-    print(f"Dev Loss: {dev_loss:.4f}, Dev Acc: {dev_acc:.4f}")
+        avg_train_loss = total_loss / len(train_dataloader)
+        dev_acc, dev_loss = evaluate(model, dev_dataloader, device)
 
-    if dev_acc > best_dev_acc:
-        best_dev_acc = dev_acc
-        torch.save(model.state_dict(), "best_model.pt")
-        print("最佳模型已保存！")
+        print(f"Epoch {epoch+1}, Train Loss: {avg_train_loss:.4f}")
+        print(f"Dev Loss: {dev_loss:.4f}, Dev Acc: {dev_acc:.4f}")
 
-# 10.测试
-model.load_state_dict(torch.load("best_model.pt"))
-test_loss, test_acc = evaluate(model, test_dataloader, device)
+        if dev_acc > best_dev_acc:
+            best_dev_acc = dev_acc
+            torch.save(model.state_dict(), config["best_model_path"])
+            print("最佳模型已保存！")
+
+def test(model, test_dataloader, device, config):
+    model.load_state_dict(torch.load(config["best_model_path"], map_location=device))
+    model.to(device)
+
+    test_acc, test_loss = evaluate(model, test_dataloader, device)
+    print(f"Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
