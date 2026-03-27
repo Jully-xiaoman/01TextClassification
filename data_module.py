@@ -70,7 +70,7 @@ def create_datasets_and_loaders(config):
     test_texts = test_df["title"].tolist()
     test_labels = test_df["category_name"].map(label2id).tolist()
 
-    tokenizer = AutoTokenizer.from_pretrained(config["pretrained_model"])
+    tokenizer = AutoTokenizer.from_pretrained(config["model_path"])
 
     train_dataset = NewsDataset(
         train_texts, train_labels, tokenizer, max_length=config["max_length"]
